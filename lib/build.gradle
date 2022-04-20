@@ -1,0 +1,69 @@
+buildscript {
+    repositories {
+        mavenLocal()
+    }
+}
+
+plugins {
+    id "java-library"
+    id "org.openapi.generator" version "5.4.0-SNAPSHOT"
+}
+
+ext{
+    findBugsVersion = "3.0.2"
+    jacksonVersion = "2.10.4"
+    jacksonDatabindNullableVersion = "0.2.2"
+    jakartaAnnotationVersion = "1.3.5"
+    outputDir = "build/generated/sources/"
+    resilience4jVersion = "1.7.1"
+    swaggerAnnotationsVersion = "1.5.22"
+}
+
+sourceCompatibility = 11
+targetCompatibility = 11
+
+sourceSets.main.java.srcDirs += "$outputDir"
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
+dependencies {
+    implementation "io.swagger:swagger-annotations:$swaggerAnnotationsVersion"
+    implementation "com.fasterxml.jackson.core:jackson-core:$jacksonVersion"
+    implementation "com.fasterxml.jackson.core:jackson-annotations:$jacksonVersion"
+    implementation "com.fasterxml.jackson.core:jackson-databind:$jacksonVersion"
+    implementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:$jacksonVersion"
+    implementation "org.openapitools:jackson-databind-nullable:$jacksonDatabindNullableVersion"
+    implementation "com.google.code.findbugs:jsr305:$findBugsVersion"
+    implementation "jakarta.annotation:jakarta.annotation-api:$jakartaAnnotationVersion"
+    implementation "io.github.resilience4j:resilience4j-retry:$resilience4jVersion"
+}
+
+task deleteExtraGeneratedDirectories(type: Delete) {
+    delete ".openapi-generator"
+    delete "api"
+    delete "src"
+}
+
+tasks.deleteExtraGeneratedDirectories.dependsOn tasks.openApiGenerate
+compileJava.dependsOn tasks.deleteExtraGeneratedDirectories
+
+openApiGenerate {
+    generatorName = "java"
+    inputSpec = "$rootDir/infrastructure/openapi-spec.yml"
+    outputDir = "$projectDir"
+    apiPackage = "com.connor.reading.client"
+    modelPackage = "com.connor.reading.client.dto"
+    configOptions = [
+            dateLibrary: "java8",
+            generateBuilders: "true",
+            library: "nativeWithRetries",
+            useRuntimeException: "true",
+            generatePom: "false",
+            sourceFolder: "build/generated/sources/"
+    ]
+}
+
+//NOTE: you would also have a publications block here
